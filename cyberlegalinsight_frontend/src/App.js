@@ -3,6 +3,7 @@ import './App.css';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import FileUpload from "./components/FileUpload";
 import QuestionFlow from "./components/QuestionFlow";
+import LexiLockLogo from "./components/LexiLockLogo";
 
 import AnalysisStep from "./components/AnalysisStep";
 
@@ -334,8 +335,9 @@ function AppInner() {
     <div className="app" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav className="navbar">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div className="logo">
-            <span className="logo-symbol">*</span> LexiLock
+          <div className="logo" style={{ gap: 10 }}> {/* Visually balance the gap */}
+            <LexiLockLogo size={30} style={{ marginRight: 2 }} />
+            <span>LexiLock</span>
           </div>
           {/* Animated theme toggle */}
           <button
