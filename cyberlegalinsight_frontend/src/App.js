@@ -120,7 +120,7 @@ function AppInner() {
   const stepContents = {
     0: (
       <section className="hero" key={0}>
-        <div className="subtitle">CyberLegalInsight</div>
+        <div className="subtitle">LexiLock</div>
         <h1 className="title">Contract Risk & Cyber Behavior Analyzer</h1>
         <div className="description">
           Interactive legal safety, contract AI, and cyber risk dashboard—all in one. Start by uploading your document.
@@ -335,7 +335,7 @@ function AppInner() {
       <nav className="navbar">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div className="logo">
-            <span className="logo-symbol">*</span> CyberLegalInsight
+            <span className="logo-symbol">*</span> LexiLock
           </div>
           {/* Animated theme toggle */}
           <button

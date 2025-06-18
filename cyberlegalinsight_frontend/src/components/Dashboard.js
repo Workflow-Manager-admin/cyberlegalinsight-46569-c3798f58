@@ -323,10 +323,10 @@ function Dashboard({
     const html = `
       <html>
         <head>
-          <meta charset="utf-8"><title>CyberLegalInsight Dashboard Report</title>
+          <meta charset="utf-8"><title>LexiLock Dashboard Report</title>
         </head>
         <body style="font-family:Arial,sans-serif;">
-          <h2>CyberLegalInsight Dashboard Report</h2>
+          <h2>LexiLock Dashboard Report</h2>
           <div><b>User:</b> ${userName}</div>
           <div><b>Scores:</b> Cyber Hygiene: ${scores.cyber} | Legal: ${scores.legal} | Safety Index: ${scores.safety}</div>
           <div><b>Summary:</b> ${summary}</div>
@@ -344,14 +344,14 @@ function Dashboard({
           <div><b>Checklist:</b>
             <ul>${checklist.map(c => `<li>${c.item} [${c.priority}]</li>`).join("")}</ul>
           </div>
-          <div style="color:#999; margin-top:22px;font-size:12px;">(Demo Export powered by CyberLegalInsight Dashboard v1.0)</div>
+          <div style="color:#999; margin-top:22px;font-size:12px;">(Demo Export powered by LexiLock Dashboard v1.0)</div>
         </body>
       </html>
     `;
     const blob = new Blob([html], {type:"text/html"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "cyberlegalinsight_dashboard_report.html";
+    a.download = "lexilock_dashboard_report.html";
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
