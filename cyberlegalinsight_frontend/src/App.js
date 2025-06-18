@@ -266,7 +266,7 @@ function AppInner() {
     4: (
       <section key={4}>
         <h2>Step 4: Results Dashboard</h2>
-        {/* Replace placeholder with the actual Dashboard component */}
+        {/* The actual Dashboard is rendered below */}
         <Dashboard />
         <button className="btn" onClick={goBack}>Back</button>
         <button className="btn btn-large" onClick={goNext}>Finish</button>
