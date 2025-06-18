@@ -2,70 +2,93 @@ import React, { useState, useRef, useEffect } from "react";
 
 /**
  * ChatSidebar component
- * A floating right-side chat panel for legal/cyber Q&A using simulated/canned logic.
+ * A visually distinct, floating right-side chat assistant for legal/cyber Q&A.
+ * Theme-aware, always accessible, and handles chat history, input, and example legal/safety Q&A.
  *
  * Usage:
  *   <ChatSidebar />
  *
- * Manages its own message state and basic canned-response logic.
- * Stylish, fits main app branding, supports light/dark themes.
- *
+ * PUBLIC_INTERFACE
  */
-// PUBLIC_INTERFACE
 function ChatSidebar() {
+  // Example starter messages (history persisted only per session for privacy)
   const [messages, setMessages] = useState([
     {
       from: "AI",
       text:
-        "👋 Hi! I'm your legal & safety assistant. Ask me about contracts, privacy, or cyber risk."
+        "👋 Hi! I'm your legal & safety assistant. Ask me about contracts, privacy, or cyber risks. (Type a question below ↓)"
+    },
+    {
+      from: "AI",
+      text:
+        "e.g. \"What does an NDA protect?\" — or — \"What happens if I breach a security clause?\""
     }
   ]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const messagesEndRef = useRef();
 
   // Scroll to bottom on message update
   useEffect(() => {
-    if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current && isOpen)
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    // Update unread if closed when new AI message arrives
+    if (!isOpen && messages.length > 0 && messages[messages.length - 1].from === "AI") {
+      setUnreadCount((c) => c + 1);
+    }
+    if (isOpen) setUnreadCount(0);
+    // eslint-disable-next-line
   }, [messages, isOpen]);
 
+  // Theme colors for shadow/glass effect (not CSS: for floating distinctness)
+  const shadowColor = "rgba(74,144,226,0.32)"; // blue themed
+  const glassBgLight = "rgba(255,255,255,0.76)";
+  const glassBgDark = "rgba(10,30,44,0.99)"; // fallback for dark
+  const floatingBlur = "blur(8px)";
+
   // Canned/logic: simple pattern matching over user question
+  // PUBLIC_INTERFACE
   function getCannedResponse(msg) {
-    const txt = msg.trim().toLowerCase();
+    const txt = (msg || "").trim().toLowerCase();
     if (!txt) return null;
-    if (txt.includes("nda") || txt.includes("non-disclosure"))
+    if (/nda|non-disclosure/.test(txt))
       return "Non-disclosure agreements (NDAs) help protect confidential info. Be sure it spells out what info is covered, and how long obligations last.";
-    if (txt.includes("termination"))
+    if (/termination/.test(txt))
       return "Termination clauses define how/when a contract ends. Watch for auto-renewal, notice periods, and penalties.";
-    if (txt.includes("data") && txt.includes("privacy"))
+    if (/data.*privacy|privacy.*data/.test(txt))
       return "For data privacy, ensure the contract covers data handling, GDPR/CCPA compliance, and breach notification obligations.";
-    if (txt.includes("cyber security") || txt.includes("cybersecurity"))
+    if (/(cyber ?security|cybersecurity)/.test(txt))
       return "Cybersecurity clauses often specify required protections, incident response, and who is liable after a breach.";
-    if (txt.includes("liability") || txt.includes("indemnify"))
+    if (/liability|indemnif(y|ication)/.test(txt))
       return "Liability and indemnification clauses impact who pays for damages. Caps and exclusions matter—review those carefully.";
-    if (txt.includes("jurisdiction") || txt.includes("governing law"))
-      return "Jurisdiction/gov. law clauses say which country/state laws apply. This affects where disputes must be resolved.";
-    if (txt.includes("contract") && txt.includes("risk"))
+    if (/jurisdiction|governing law/.test(txt))
+      return "Jurisdiction/governing law clauses say which country/state laws apply. This affects where disputes must be resolved.";
+    if (/contract.*risk|risk.*contract/.test(txt))
       return "Typical contract risks: unclear terms, hidden obligations, harsh penalties, vague dispute resolution, or overbroad liability.";
-    if (txt.includes("security breach"))
+    if (/security breach/.test(txt))
       return "After a security breach, notify affected parties promptly and follow laws or the contract's incident response section.";
-    if (txt.includes("help") || txt.includes("what can you do"))
-      return "I can answer general questions about contracts, risk, and safety. Try asking about NDAs or cyber clauses!";
-    if (txt.includes("ai"))
-      return "I use pre-set answers (not real legal advice). For legal decisions, always consult a qualified professional.";
-    if (/hello|hi|hey|start|hola|bonjour/.test(txt))
+    if (/help|what can you do|what do you do/.test(txt))
+      return "I can answer general questions about contracts, legal/safety risk, and privacy/cyber provisions. Try \"What is a limitation of liability?\"";
+    if (/ai/.test(txt))
+      return "I use simulated, pre-set answers, not real legal advice. For legal decisions, always consult a qualified professional.";
+    if (/hello|hi|hey|start|hola|bonjour|sup/.test(txt))
       return "Hello! How can I help with your contract or safety questions?";
+    // Example: Breach scenario
+    if (/breach/.test(txt))
+      return "A breach usually means someone didn’t meet their obligations in the contract. Remedies depend on what is specified in your agreement!";
     // Fallback
-    return "Sorry, I'm just a demo and can't answer that in detail. Try asking about NDAs, risk, privacy, or cybersecurity.";
+    return "Sorry, I’m a demo AI and can’t answer that in detail. Try asking about NDAs, risk, privacy, or cybersecurity clauses.";
   }
 
+  // PUBLIC_INTERFACE
   // Handle user submission
-  const handleSend = e => {
+  const handleSend = (e) => {
     e && e.preventDefault();
     const userMsg = input.trim();
     if (!userMsg) return;
-    setMessages(msgs => [
+    setMessages((msgs) => [
       ...msgs,
       { from: "User", text: userMsg }
     ]);
@@ -73,62 +96,70 @@ function ChatSidebar() {
     // Simulate AI response after short delay
     setTimeout(() => {
       const aiMsg = getCannedResponse(userMsg);
-      setMessages(msgs =>
+      setMessages((msgs) =>
         [...msgs, { from: "AI", text: aiMsg }]
       );
     }, 600);
   };
 
   // Floating toggle button for mobile/collapsed view
-  const sidebarWidth = isOpen ? 320 : 38;
+  const sidebarWidth = isOpen ? 352 : 38;
 
+  // "Always accessible": user can open/close, but it's always floating and not covered by main app scroll
   return (
     <div
       style={{
         position: "fixed",
-        top: 94,
-        right: 14,
+        top: 98,
+        right: 18,
         width: sidebarWidth,
-        maxWidth: "94vw",
-        zIndex: 1112,
-        transition: "width 0.33s cubic-bezier(.7,0,.3,1), box-shadow 0.33s",
+        maxWidth: "95vw",
+        zIndex: 1810,
+        transition: "width 0.34s cubic-bezier(.6,0,.3,1), box-shadow 0.28s",
         boxShadow: isOpen
-          ? "0 2px 24px #4A90E220"
-          : "0 0 12px 3px #0001",
-        borderRadius: 14,
+          ? `0 8px 44px 0 ${shadowColor}`
+          : `0 0 12px 3px #31344522`,
+        borderRadius: 15,
         overflow: "visible",
-        pointerEvents: "auto"
+        pointerEvents: "auto",
+        backdropFilter: isOpen ? floatingBlur : "none",
+        WebkitBackdropFilter: isOpen ? floatingBlur : "none"
       }}
-      aria-label="Chat Assistant Sidebar"
+      aria-label="Chat Legal Assistant Sidebar"
+      tabIndex={-1}
+      role="complementary"
     >
       <div
         style={{
-          background: "var(--base-dark, #00132a)",
-          border: "2px solid var(--primary, #4A90E2)",
-          borderRadius: 14,
-          padding: isOpen ? "16px 13px 10px 15px" : "6px 3px",
-          minHeight: 60,
-          minWidth: isOpen ? 300 : 36,
-          width: isOpen ? 320 : 36,
+          background: "var(--base-dark, #191c34)",
+          border: isOpen ? "2.7px solid var(--primary, #4A90E2)" : "2px solid var(--primary)",
+          borderRadius: 15,
+          padding: isOpen ? "20px 15px 12px 19px" : "6px 3px",
+          minHeight: isOpen ? 90 : 42,
+          minWidth: isOpen ? 333 : 36,
+          width: isOpen ? 352 : 36,
           boxSizing: "border-box",
           color: "var(--text-color, #fff)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
           alignItems: "stretch",
-          transition: "all 0.33s cubic-bezier(.7,0,.3,1)"
+          transition: "all 0.30s cubic-bezier(.75,0,.31,1)"
         }}
       >
         {/* Floating toggle button */}
         <button
-          onClick={() => setIsOpen(v => !v)}
-          aria-label={isOpen ? "Close chat" : "Open chat"}
+          onClick={() => {
+            setIsOpen((v) => !v);
+            if (!isOpen) setUnreadCount(0);
+          }}
+          aria-label={isOpen ? "Close chat" : "Open legal/safety AI chat"}
           style={{
             position: "absolute",
-            left: isOpen ? -39 : -2,
-            top: 16,
-            width: 38,
-            height: 38,
+            left: isOpen ? -43 : -6,
+            top: isOpen ? 20 : 9,
+            width: 40,
+            height: 40,
             borderRadius: "50%",
             background: "var(--primary)",
             color: "#fff",
@@ -136,37 +167,73 @@ function ChatSidebar() {
             boxShadow: "0 2px 10px #4A90E235",
             cursor: "pointer",
             zIndex: 2,
-            fontSize: 19,
-            transition: "all 0.23s"
+            fontSize: 22,
+            transition: "all 0.18s"
           }}
         >
-          {isOpen ? "→" : "💬"}
+          {isOpen ? (
+            <span aria-hidden title="Hide chat" style={{ display: "block", fontWeight: 700, fontSize: 26 }}>&#8594;</span>
+          ) : (
+            <span aria-hidden title="Open chat" style={{ display: "block", fontWeight: 500, fontSize: 23 }}>
+              💬
+              {!!unreadCount && (
+                <span style={{
+                  position: "absolute",
+                  top: 5,
+                  right: 5,
+                  display: "inline-block",
+                  minWidth: 18,
+                  height: 18,
+                  background: "var(--accent)",
+                  color: "#fff",
+                  borderRadius: "50%",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  lineHeight: "18px",
+                  textAlign: "center",
+                  boxShadow: "0 0 8px #F5A62377",
+                  pointerEvents: "none"
+                }}>{unreadCount}</span>
+              )}
+            </span>
+          )}
         </button>
         {isOpen && (
           <>
-            <div style={{ fontWeight: 700, letterSpacing: 0.5, color: "var(--base-light)", marginBottom: 6, fontSize: 17, display: "flex", alignItems: "center", gap: 6 }}>
-              <span role="img" aria-label="chat assistant" style={{ fontSize: 18 }}>🤖</span> Chat Assistant
+            <div style={{
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              color: "var(--base-light)",
+              marginBottom: 7,
+              fontSize: 17.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 7
+            }}>
+              <span role="img" aria-label="chat assistant" style={{ fontSize: 20 }}>🤖</span>
+              Legal Assistant
             </div>
             <div
               style={{
-                flex: 1,
-                maxHeight: "36vh",
-                minHeight: 102,
+                flex: "1 1 130px",
+                maxHeight: "38vh",
+                minHeight: 117,
                 overflowY: "auto",
-                background: "rgba(74,144,226,0.06)",
-                borderRadius: 9,
-                marginBottom: 7,
-                padding: 7,
-                fontSize: 14,
+                background: "rgba(74,144,226,0.059)",
+                borderRadius: 10,
+                marginBottom: 8,
+                padding: "9px 6px 7px 6px",
+                fontSize: 15,
                 transition: "background 0.2s"
               }}
               aria-live="polite"
+              tabIndex={0}
             >
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
                   style={{
-                    marginBottom: 7,
+                    marginBottom: 8,
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: msg.from === "User" ? "flex-end" : "flex-start"
@@ -174,79 +241,118 @@ function ChatSidebar() {
                 >
                   <span
                     style={{
-                      background: msg.from === "AI" ? "var(--primary, #4A90E2)" : "var(--base-light, #fff)",
-                      color: msg.from === "AI" ? "#fff" : "#10121a",
+                      background: msg.from === "AI"
+                        ? "linear-gradient(97deg, var(--primary, #4A90E2) 80%, var(--accent,#F5A623) 180%)"
+                        : "var(--base-light, #fff)",
+                      color: msg.from === "AI" ? "#fff" : "#29313e",
                       borderRadius: 8,
-                      padding: "6px 12px",
-                      boxShadow: msg.from === "AI" ? "0 1px 7px #4A90E215" : "0 0px 3px #ddd1",
-                      fontSize: 14,
-                      maxWidth: "84%",
+                      padding: "7px 14px",
+                      boxShadow: msg.from === "AI"
+                        ? "0 1px 7px #4A90E210"
+                        : "0 0px 3px #e0e7ff",
+                      fontSize: 15,
+                      maxWidth: "85%",
+                      minWidth: 34,
                       overflowWrap: "break-word",
-                      alignSelf: msg.from === "User" ? "flex-end" : "flex-start"
+                      alignSelf: msg.from === "User" ? "flex-end" : "flex-start",
+                      fontWeight: msg.from === "AI" ? 500 : 480,
+                      lineHeight: 1.6
                     }}
                   >
                     {msg.text}
                   </span>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef}></div>
             </div>
             <form
               onSubmit={handleSend}
-              style={{ display: "flex", gap: 8, marginTop: 1 }}
+              style={{ display: "flex", gap: 9, marginTop: 2 }}
               autoComplete="off"
+              aria-label="Chat submission form"
             >
               <input
                 name="chat"
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Type a legal/cyber question…"
+                placeholder="Ask your legal/cyber question…"
                 style={{
                   flex: 1,
-                  borderRadius: 6,
-                  padding: "7px 12px",
-                  fontSize: 14,
+                  borderRadius: 8,
+                  padding: "9px 14px",
+                  fontSize: 15,
                   border: "1.5px solid var(--border-color, #ccd)",
                   background: "var(--base-light, #fff)",
                   outline: "none",
-                  color: "var(--text-color, #111)"
+                  color: "var(--text-color, #10101f)",
+                  fontWeight: 480
                 }}
-                disabled={input.length > 300}
+                disabled={input.length > 350}
                 maxLength={400}
-                aria-label="Chat input"
+                aria-label="Type your question"
               />
               <button
                 className="btn"
                 style={{
-                  fontSize: 13,
-                  padding: "4px 15px",
-                  borderRadius: 6,
+                  fontSize: 14,
+                  padding: "5px 18px",
+                  borderRadius: 7,
                   minWidth: 38
                 }}
                 type="submit"
                 disabled={!input.trim()}
+                aria-label="Send message"
               >
                 Send
               </button>
             </form>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", margin: "4px 4px 0 4px", textAlign: "center" }}>
-              Answers are for informational/demo purposes only.<br />Not legal advice.
+            <div style={{
+              fontSize: 11.5,
+              color: "var(--text-secondary)",
+              margin: "6px 6px 0 6px",
+              textAlign: "center",
+              fontStyle: "italic"
+            }}>
+              Example Q&A: NDAs, cyber clauses, liability, and privacy. <br />
+              <span style={{ color: "var(--accent)" }}>Not legal advice.</span>
             </div>
           </>
         )}
-        {/* (Optionally: Show vertical label when closed) */}
+        {/* Show vertical label + notification dot when closed */}
         {!isOpen && (
           <div style={{
             writingMode: "vertical-rl",
-            fontWeight: 600,
+            fontWeight: 800,
             color: "var(--primary)",
-            fontSize: 14,
-            opacity: 0.8,
-            marginLeft: 5,
-            marginTop: 22,
-            letterSpacing: 1
-          }}>ASK AI</div>
+            fontSize: 15,
+            opacity: 0.88,
+            marginLeft: 7,
+            marginTop: 18,
+            letterSpacing: 1.2,
+            textShadow: "0 2px 12px #4A90E260"
+          }}>
+            ASK AI
+            {!!unreadCount && (
+              <span style={{
+                position: "absolute",
+                right: 4,
+                top: 12,
+                display: "inline-block",
+                minWidth: 17,
+                height: 17,
+                background: "var(--accent)",
+                color: "#fff",
+                borderRadius: "60%",
+                fontSize: 11,
+                fontWeight: 800,
+                lineHeight: "17px",
+                textAlign: "center",
+                boxShadow: "0 0 8px #F5A62377",
+                pointerEvents: "none"
+              }}>{unreadCount}</span>
+            )}
+          </div>
         )}
       </div>
     </div>
