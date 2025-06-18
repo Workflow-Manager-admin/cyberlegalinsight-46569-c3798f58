@@ -445,27 +445,11 @@ function AppInner() {
           </div>
         </main>
 
-        {/* RIGHT SIDEBAR (chat assistant) */}
-        <aside style={{
-          width: 280,
-          minWidth: 180,
-          borderLeft: '1px solid var(--border-color)',
-          background: 'rgba(0,255,255,0.05)',
-          padding: 12,
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
-          <div style={{
-            fontWeight: 600,
-            color: 'var(--base-light)',
-            marginBottom: 12
-          }}>
-            AI Chat Legal Assistant
-          </div>
-          <div style={{ flex: 1, color: 'var(--text-secondary)', fontSize: 13 }}>
-            [Placeholder: Chat about legal or safety topics]
-          </div>
-        </aside>
+        {/* RIGHT SIDEBAR: injects floating ChatSidebar for legal assistant */}
+        {/* Always accessible as a floating assistant, overlays on top/right */}
+        {require('./components/ChatSidebar').default
+          ? React.createElement(require('./components/ChatSidebar').default, {})
+          : null}
       </div>
 
       {/* Example animated modal/dialog, for demonstration */}
