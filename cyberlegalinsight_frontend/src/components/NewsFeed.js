@@ -99,22 +99,47 @@ function NewsFeed({ items }) {
     return () => clearTimeout(timerRef.current);
   }, [items]);
 
-  // Render helper
+  // Render helper with robust checks to prevent runtime errors
   function renderItem(item, idx) {
+    // Guard clause: skip rendering if item is null/undefined or not an object
+    if (!item || typeof item !== "object") {
+      return (
+        <div
+          key={`malformed-${idx}`}
+          style={{
+            background: "#fbe9e7",
+            color: "#c62828",
+            padding: "8px 10px",
+            borderRadius: 8,
+            marginBottom: 10,
+            fontSize: 12.5
+          }}
+        >
+          [Feed Error] Malformed news/alert item
+        </div>
+      );
+    }
+
+    // Use "unknown" as fallback for missing .type
+    const safeType = typeof item.type === "string" ? item.type : "unknown";
     const color =
-      item.type === "alert"
+      safeType === "alert"
         ? "var(--accent, #F5A623)"
-        : "var(--secondary, #50E3C2)";
+        : safeType === "news"
+        ? "var(--secondary, #50E3C2)"
+        : "#bbb";
     const bg =
-      item.type === "alert"
+      safeType === "alert"
         ? "rgba(245,166,35,0.13)"
-        : "rgba(80,227,194,0.10)";
+        : safeType === "news"
+        ? "rgba(80,227,194,0.10)"
+        : "rgba(128,128,128,0.03)";
 
     // Animate for newly appearing item
     const isNew = animatingId === item.id && idx === 0;
     return (
       <div
-        key={item.id}
+        key={item.id || `feedItem-${idx}`}
         style={{
           background: bg,
           borderLeft: `4px solid ${color}`,
@@ -132,7 +157,7 @@ function NewsFeed({ items }) {
         }}
       >
         {/* Animated side pulse for alerts */}
-        {item.type === "alert" && (
+        {safeType === "alert" && (
           <span
             style={{
               position: "absolute",
@@ -151,7 +176,7 @@ function NewsFeed({ items }) {
         )}
 
         <div style={{ fontWeight: 600, fontSize: 13.5, color }}>
-          {item.title}
+          {item.title || <span style={{ color: "#999", fontStyle: "italic" }}>(No title)</span>}
         </div>
         <div
           style={{
@@ -161,7 +186,9 @@ function NewsFeed({ items }) {
             margin: "2px 0 0 0",
           }}
         >
-          {item.summary}
+          {typeof item.summary === "string" && item.summary.length
+            ? item.summary
+            : <span style={{ color: "#bbb" }}>[No summary]</span>}
         </div>
         <div
           style={{
@@ -172,7 +199,7 @@ function NewsFeed({ items }) {
             marginTop: 2,
           }}
         >
-          {item.time}
+          {item.time || ""}
         </div>
       </div>
     );
