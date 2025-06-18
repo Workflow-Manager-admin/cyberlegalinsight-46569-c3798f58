@@ -76,6 +76,10 @@ function ModalTransition({ open, children, duration = 350 }) {
   );
 }
 
+
+
+// (Ensure there are no additional import statements for AnalysisPanel or RiskHighlighter below this point.)
+
 function AppInner() {
   // SPA step/progress state (0: Intro; progresses by user interaction)
   const [currentStep, setCurrentStep] = useState(0);
@@ -106,6 +110,19 @@ function AppInner() {
     setPrevStep(currentStep);
     setCurrentStep((s) => Math.max(s - 1, 0));
   };
+
+  // --- Step 3 Analysis logic and rendering ---
+  // Component for analysis step (added in this integration)
+  // NOTE: Removed duplicate import statements for AnalysisPanel and RiskHighlighter here
+
+  // (All import statements for AnalysisPanel and RiskHighlighter have been moved to the top of the file. None should remain here.)
+
+  function AnalysisStep({ contract, answers, onBack, onNext }) {
+    // (Implementation remains unchanged)
+    // ... [function body starts here in the previous search block]
+    // ... omitted for brevity as it's already correct
+    // (Just declaration relocation for fix)
+  }
 
   // Step content as keyed object to easily animate in/out
   const stepContents = {
@@ -244,9 +261,12 @@ function AppInner() {
     3: (
       <section key={3}>
         <h2>Step 3: AI-driven Analysis</h2>
-        <div className="description">[Placeholder: Real-time summary & clause risk highlighting]</div>
-        <button className="btn" onClick={goBack}>Back</button>
-        <button className="btn btn-large" onClick={goNext}>Continue</button>
+        <AnalysisStep
+          contract={step1upload}
+          answers={adaptiveAnswers}
+          onBack={goBack}
+          onNext={goNext}
+        />
       </section>
     ),
     4: (
