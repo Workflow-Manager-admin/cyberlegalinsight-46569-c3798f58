@@ -4,6 +4,8 @@ import { ThemeProvider, useTheme } from './ThemeContext';
 import FileUpload from "./components/FileUpload";
 import QuestionFlow from "./components/QuestionFlow";
 
+import AnalysisStep from "./components/AnalysisStep";
+
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
   'Intro',
@@ -112,17 +114,7 @@ function AppInner() {
   };
 
   // --- Step 3 Analysis logic and rendering ---
-  // Component for analysis step (added in this integration)
-  // NOTE: Removed duplicate import statements for AnalysisPanel and RiskHighlighter here
-
-  // (All import statements for AnalysisPanel and RiskHighlighter have been moved to the top of the file. None should remain here.)
-
-  function AnalysisStep({ contract, answers, onBack, onNext }) {
-    // (Implementation remains unchanged)
-    // ... [function body starts here in the previous search block]
-    // ... omitted for brevity as it's already correct
-    // (Just declaration relocation for fix)
-  }
+  // (AnalysisStep now imported as component)
 
   // Step content as keyed object to easily animate in/out
   const stepContents = {
