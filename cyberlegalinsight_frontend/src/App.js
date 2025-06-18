@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
 import { ThemeProvider, useTheme } from './ThemeContext';
+import FileUpload from "./components/FileUpload";
 
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
@@ -79,6 +80,11 @@ function AppInner() {
   const [currentStep, setCurrentStep] = useState(0);
   const [prevStep, setPrevStep] = useState(null);
 
+  // Step 1 contract upload state
+  const [step1upload, setStep1upload] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
   // For modal/dialog showcase (e.g., for Export/email, badges overlay - demo only)
   const [modal, setModal] = useState(null); // null or { type, props }
 
@@ -111,9 +117,42 @@ function AppInner() {
     1: (
       <section key={1}>
         <h2>Step 1: Upload Contract</h2>
-        <div className="description">[Placeholder: File Upload & Text Input area]</div>
+        <FileUpload
+          value={typeof step1upload === "object" ? step1upload : null}
+          onUpload={data => {
+            setStep1upload(data);
+            setUploadError(null);
+            setUploadSuccess(true);
+          }}
+          onRemove={() => {
+            setStep1upload(null);
+            setUploadError(null);
+            setUploadSuccess(false);
+          }}
+        />
+        <div className="description" style={{ minHeight: 22 }}>
+          {uploadError && <span style={{ color: "#e34d4f" }}>{uploadError}</span>}
+          {uploadSuccess && step1upload && (
+            <span style={{ color: "var(--secondary)" }}>Upload successful! Your contract is ready.</span>
+          )}
+        </div>
         <button className="btn" onClick={goBack}>Back</button>
-        <button className="btn btn-large" onClick={goNext}>Continue</button>
+        <button
+          className="btn btn-large"
+          onClick={() => {
+            if (!step1upload) {
+              setUploadError("Please upload a contract file or enter text to continue.");
+              setUploadSuccess(false);
+              return;
+            }
+            setUploadError(null);
+            setUploadSuccess(false);
+            goNext();
+          }}
+          disabled={!step1upload}
+        >
+          Continue
+        </button>
       </section>
     ),
     2: (
