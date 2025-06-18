@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 import { ThemeProvider, useTheme } from './ThemeContext';
 
@@ -12,82 +12,149 @@ const STEP_LABELS = [
   'Export',
 ];
 
+// Utility for trigger reflow (for animation resets)
+function forceReflow(node) {
+  void node?.offsetHeight;
+}
+
+function FadeSlideTransition({ children, mode, duration = 380 }) {
+  // mode: "in"|"out"
+  const nodeRef = useRef();
+  React.useLayoutEffect(() => {
+    if (mode === "in" && nodeRef.current) {
+      forceReflow(nodeRef.current);
+      nodeRef.current.classList.add("slide-fade-in");
+      nodeRef.current.classList.remove("slide-fade-out");
+    }
+    if (mode === "out" && nodeRef.current) {
+      forceReflow(nodeRef.current);
+      nodeRef.current.classList.remove("slide-fade-in");
+      nodeRef.current.classList.add("slide-fade-out");
+    }
+  }, [mode]);
+  return (
+    <div
+      ref={nodeRef}
+      className="slide-fade"
+      style={{
+        transition: `opacity ${duration}ms cubic-bezier(.62,0,.28,1), transform ${duration}ms cubic-bezier(.62,0,.28,1)`,
+        willChange: "opacity, transform"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ModalTransition({ open, children, duration = 350 }) {
+  // CSS-based modal fade + scale pop
+  const nodeRef = useRef();
+  React.useLayoutEffect(() => {
+    if (nodeRef.current) {
+      if (open) {
+        nodeRef.current.classList.add("modal-fade-in");
+        nodeRef.current.classList.remove("modal-fade-out");
+      } else {
+        nodeRef.current.classList.remove("modal-fade-in");
+        nodeRef.current.classList.add("modal-fade-out");
+      }
+    }
+  }, [open]);
+  return (
+    <div
+      ref={nodeRef}
+      className="modal-fade"
+      style={{
+        transition: `opacity ${duration}ms cubic-bezier(.54,.01,.45,1.03), transform ${duration}ms cubic-bezier(.54,.01,.45,1.03)`,
+        willChange: "opacity, transform"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function AppInner() {
   // SPA step/progress state (0: Intro; progresses by user interaction)
   const [currentStep, setCurrentStep] = useState(0);
+  const [prevStep, setPrevStep] = useState(null);
 
-  // Theme
+  // For modal/dialog showcase (e.g., for Export/email, badges overlay - demo only)
+  const [modal, setModal] = useState(null); // null or { type, props }
+
+  // Theme & animated toggle state
   const { theme, toggleTheme } = useTheme();
+  const [themeIconAnim, setThemeIconAnim] = useState(false);
 
   // Navigation logic: forward/back
-  const goNext = () => setCurrentStep((s) => Math.min(s + 1, STEP_LABELS.length - 1));
-  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0));
-
-  // Placeholder for main content steps
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <section className="hero">
-            <div className="subtitle">CyberLegalInsight</div>
-            <h1 className="title">Contract Risk & Cyber Behavior Analyzer</h1>
-            <div className="description">
-              Interactive legal safety, contract AI, and cyber risk dashboard—all in one. Start by uploading your document.
-            </div>
-            <button className="btn btn-large" onClick={goNext}>Get Started</button>
-          </section>
-        );
-      case 1:
-        return (
-          <section>
-            <h2>Step 1: Upload Contract</h2>
-            <div className="description">[Placeholder: File Upload & Text Input area]</div>
-            <button className="btn" onClick={goBack}>Back</button>
-            <button className="btn btn-large" onClick={goNext}>Continue</button>
-          </section>
-        );
-      case 2:
-        return (
-          <section>
-            <h2>Step 2: Adaptive Questions</h2>
-            <div className="description">[Placeholder: Dynamic question flow based on user answers]</div>
-            <button className="btn" onClick={goBack}>Back</button>
-            <button className="btn btn-large" onClick={goNext}>Continue</button>
-          </section>
-        );
-      case 3:
-        return (
-          <section>
-            <h2>Step 3: AI-driven Analysis</h2>
-            <div className="description">[Placeholder: Real-time summary & clause risk highlighting]</div>
-            <button className="btn" onClick={goBack}>Back</button>
-            <button className="btn btn-large" onClick={goNext}>Continue</button>
-          </section>
-        );
-      case 4:
-        return (
-          <section>
-            <h2>Step 4: Results Dashboard</h2>
-            <div className="description">[Placeholder: Charts, scores, detailed analysis, download/email options]</div>
-            <button className="btn" onClick={goBack}>Back</button>
-            <button className="btn btn-large" onClick={goNext}>Finish</button>
-          </section>
-        );
-      case 5:
-        return (
-          <section>
-            <h2>Export & Save Reports</h2>
-            <div className="description">[Placeholder: Download, email, user history/profile/badges]</div>
-            <button className="btn" onClick={goBack}>Back</button>
-            <button className="btn btn-large" onClick={() => setCurrentStep(0)}>Restart</button>
-          </section>
-        );
-      default:
-        return null;
-    }
+  const goNext = () => {
+    setPrevStep(currentStep);
+    setCurrentStep((s) => Math.min(s + 1, STEP_LABELS.length - 1));
+  };
+  const goBack = () => {
+    setPrevStep(currentStep);
+    setCurrentStep((s) => Math.max(s - 1, 0));
   };
 
-  // Placeholder progress bar/step indicator
+  // Step content as keyed object to easily animate in/out
+  const stepContents = {
+    0: (
+      <section className="hero" key={0}>
+        <div className="subtitle">CyberLegalInsight</div>
+        <h1 className="title">Contract Risk & Cyber Behavior Analyzer</h1>
+        <div className="description">
+          Interactive legal safety, contract AI, and cyber risk dashboard—all in one. Start by uploading your document.
+        </div>
+        <button className="btn btn-large" onClick={goNext}>Get Started</button>
+      </section>
+    ),
+    1: (
+      <section key={1}>
+        <h2>Step 1: Upload Contract</h2>
+        <div className="description">[Placeholder: File Upload & Text Input area]</div>
+        <button className="btn" onClick={goBack}>Back</button>
+        <button className="btn btn-large" onClick={goNext}>Continue</button>
+      </section>
+    ),
+    2: (
+      <section key={2}>
+        <h2>Step 2: Adaptive Questions</h2>
+        <div className="description">[Placeholder: Dynamic question flow based on user answers]</div>
+        <button className="btn" onClick={goBack}>Back</button>
+        <button className="btn btn-large" onClick={goNext}>Continue</button>
+      </section>
+    ),
+    3: (
+      <section key={3}>
+        <h2>Step 3: AI-driven Analysis</h2>
+        <div className="description">[Placeholder: Real-time summary & clause risk highlighting]</div>
+        <button className="btn" onClick={goBack}>Back</button>
+        <button className="btn btn-large" onClick={goNext}>Continue</button>
+      </section>
+    ),
+    4: (
+      <section key={4}>
+        <h2>Step 4: Results Dashboard</h2>
+        <div className="description">[Placeholder: Charts, scores, detailed analysis, download/email options]</div>
+        <button className="btn" onClick={goBack}>Back</button>
+        <button className="btn btn-large" onClick={goNext}>Finish</button>
+      </section>
+    ),
+    5: (
+      <section key={5}>
+        <h2>Export & Save Reports</h2>
+        <div className="description">[Placeholder: Download, email, user history/profile/badges]</div>
+        <button className="btn" onClick={goBack}>Back</button>
+        <button className="btn btn-large" onClick={() => setCurrentStep(0)}>Restart</button>
+      </section>
+    ),
+  };
+
+  // Step transition direction for animation (right = next, left = back)
+  const stepDirection = prevStep === null || currentStep > prevStep ? "right" : "left";
+
+
+  // Progress Bar/Step Indicator
   const renderProgressBar = () => (
     <div style={{ margin: '24px 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
       {STEP_LABELS.map((label, i) => (
@@ -103,7 +170,7 @@ function AppInner() {
               minWidth: 60,
               textAlign: 'center',
               boxShadow: i === currentStep ? '0 0 4px #00ffff80' : undefined,
-              transition: 'all 0.2s'
+              transition: 'all 0.38s cubic-bezier(.62,0,.28,1)'
             }}
           >
             {label}
@@ -113,13 +180,25 @@ function AppInner() {
               width: 16,
               height: 2,
               background: i < currentStep ? 'var(--base-light)' : 'var(--border-color)',
-              borderRadius: 1
+              borderRadius: 1,
+              transition: "background 0.35s cubic-bezier(.62,0,.28,1)"
             }} />
           )}
         </React.Fragment>
       ))}
     </div>
   );
+
+  // Modal dialog sample - REPLACE with real modal system as needed
+  const showModal = (type, props) => setModal({ type, props });
+  const hideModal = () => setModal(null);
+
+  // Subtle animated icon + ripple for theme toggle
+  const handleThemeToggle = () => {
+    setThemeIconAnim(true);
+    toggleTheme();
+    setTimeout(() => setThemeIconAnim(false), 480);
+  };
 
   // Sidebars as placeholders: Chat (right), News/Phishing (left)
   return (
@@ -131,7 +210,7 @@ function AppInner() {
           </div>
           {/* Animated theme toggle */}
           <button
-            className="btn"
+            className="btn btn-theme-anim"
             style={{
               marginLeft: 14,
               background: "var(--secondary)",
@@ -143,13 +222,22 @@ function AppInner() {
               transition: 'background 0.3s'
             }}
             aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-            onClick={toggleTheme}
+            onClick={handleThemeToggle}
           >
-            {theme === "light" ? (
-              <span aria-hidden style={{ fontSize: 18, display: "inline-block", transition: "transform 0.3s" }}>🌙</span>
-            ) : (
-              <span aria-hidden style={{ fontSize: 18, display: "inline-block", transition: "transform 0.3s" }}>☀️</span>
-            )}
+            <span
+              aria-hidden
+              className={themeIconAnim ? "theme-icon-anim" : ""}
+              style={{
+                fontSize: 18,
+                display: "inline-block",
+                transition: "transform 0.38s cubic-bezier(.72,.01,.31,1.14)",
+                transform: themeIconAnim
+                  ? "scale(1.15) rotate(25deg)"
+                  : "none"
+              }}
+            >
+              {theme === "light" ? "🌙" : "☀️"}
+            </span>
             {theme.charAt(0).toUpperCase() + theme.slice(1)}
           </button>
         </div>
@@ -181,7 +269,7 @@ function AppInner() {
           </div>
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* MAIN CONTENT WITH ANIMATED STEP TRANSITIONS */}
         <main style={{
           flex: 1,
           display: 'flex',
@@ -189,11 +277,27 @@ function AppInner() {
           alignItems: 'center',
           padding: 0,
           minWidth: 0, // keeps flex grow
+          position: "relative", // needed for step stacking
+          overflow: "hidden"
         }}>
           <div className="container" style={{ width: '100%' }}>
             {renderProgressBar()}
-            <div style={{ minHeight: 350, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              {renderStepContent()}
+            <div
+              className={`step-slider slider-${stepDirection}`}
+              style={{
+                minHeight: 350,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: "relative",
+                width: "100%",
+                overflow: "visible"
+              }}
+            >
+              <FadeSlideTransition key={currentStep} mode="in">
+                {stepContents[currentStep]}
+              </FadeSlideTransition>
             </div>
           </div>
         </main>
@@ -220,6 +324,41 @@ function AppInner() {
           </div>
         </aside>
       </div>
+
+      {/* Example animated modal/dialog, for demonstration */}
+      {modal && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: "fixed",
+            left: 0, top: 0, width: "100vw", height: "100vh",
+            background: "rgba(0,0,0,0.16)", zIndex: 1001,
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+          <ModalTransition open={!!modal}>
+            <div
+              className="modal-content"
+              style={{
+                background: "var(--base-dark)",
+                color: "var(--text-color)",
+                borderRadius: 12,
+                boxShadow: "0 2px 18px #0155d054",
+                padding: "36px 38px",
+                border: "2px solid var(--primary)",
+                minWidth: 240, maxWidth: "94vw", minHeight: 96,
+                textAlign: "center"
+              }}>
+              <div style={{ fontWeight: 700, fontSize: 21, color: "var(--accent)", marginBottom: 7 }}>
+                {modal.type === "success" ? "Action Completed!" : "Dialog"}
+              </div>
+              <div style={{ color: "var(--text-secondary)", fontSize: 15, marginBottom: 21 }}>
+                Example smooth entrance/exit. Integrate for real modals!
+              </div>
+              <button className="btn btn-large" onClick={hideModal}>Close</button>
+            </div>
+          </ModalTransition>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,91 @@
     filter 0.35s cubic-bezier(.5,0,.2,1);
 }
 
+/* STEP ANIMATION: Fade/slide in-out for main content transitions */
+.slide-fade {
+  opacity: 0;
+  transform: translateY(12px) scale(.98);
+  will-change: opacity, transform;
+  transition: opacity 0.38s cubic-bezier(.62,0,.28,1), transform 0.38s cubic-bezier(.62,0,.28,1);
+  pointer-events: none;
+}
+.slide-fade-in {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: all;
+}
+.slide-fade-out {
+  opacity: 0 !important;
+  transform: translateY(18px) scale(.98) !important;
+  pointer-events: none;
+}
+
+/* Light horizontal slide (for future left/right transitions if needed) */
+.slider-right .slide-fade-in {
+  animation: step-slidein-rt 0.38s cubic-bezier(.62,0,.28,1);
+}
+.slider-left .slide-fade-in {
+  animation: step-slidein-lf 0.38s cubic-bezier(.62,0,.28,1);
+}
+@keyframes step-slidein-rt {
+  from { opacity:0; transform: translateX(30px) scale(.98);}
+  to { opacity:1; transform:none;}
+}
+@keyframes step-slidein-lf {
+  from { opacity:0; transform: translateX(-30px) scale(.98);}
+  to { opacity:1; transform: none;}
+}
+
+/* Modal animation (entry/exit) */
+.modal-backdrop {
+  animation: modal-bg-fadein 0.25s;
+}
+@keyframes modal-bg-fadein {
+  from { background: rgba(0,0,0,0); }
+  to { background: rgba(0,0,0,0.16);}
+}
+.modal-fade {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+  transition: opacity 0.35s, transform 0.35s;
+}
+.modal-fade-in {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  pointer-events: all;
+}
+.modal-fade-out {
+  opacity: 0 !important;
+  transform: scale(0.92) !important;
+  pointer-events: none;
+}
+
+/* Theme toggle icon micro-interaction */
+.btn-theme-anim .theme-icon-anim {
+  animation: theme-icon-pop 0.42s cubic-bezier(.61,-0.11,.59,1.01);
+}
+@keyframes theme-icon-pop {
+  0% { transform: scale(1) rotate(0deg);}
+  35% { transform: scale(1.22) rotate(26deg);}
+  60% { transform: scale(0.92) rotate(-12deg);}
+  85% { transform: scale(1.1) rotate(8deg);}
+  100% { transform: scale(1) rotate(0);}
+}
+
+/* Extra: Button active click feedback */
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:hover, .btn:focus-visible {
+  background-color: var(--secondary);
+  color: #14181b;
+}
+.btn-large {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+}
+
 
 body {
   margin: 0;
