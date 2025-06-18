@@ -1,172 +1,471 @@
-import React from "react";
-
-/**
- * Dashboard component
- * Usage:
- *   <Dashboard
- *      scores={{ legal: 72, cyber: 40 }}
- *      userName="Alice"
- *      analysisSummary="..." // AI analysis text
- *      riskStats={...}       // clause/risk array
- *   />
- *
- * Props:
- *   - scores: { legal: number, cyber: number }
- *   - userName: string (optional)
- *   - analysisSummary: string
- *   - riskStats: array of { label, score, level }
- *   - children: (optional) additional dashboard panels
- */
+import React, { useState } from "react";
+import "./Dashboard.css"; // For scoped styles if needed
+import ProgressBar from "./ProgressBar";
 import ReportExport from "./ReportExport";
 
-// Tiny SVG Pie Chart for Risk Distribution
-function RiskPieChart({ data = [] }) {
-  // Expects data as [{level: "high"/"medium"/"low", value: int}]
-  const colors = { high: "#e87a41", medium: "#fff174", low: "#bdecb6" };
-  const total = data.reduce((acc, d) => acc + d.value, 0) || 1;
-  let acc = 0;
-  const arcs = data.map((d, i) => {
-    const start = acc / total;
-    acc += d.value;
-    const end = acc / total;
-    const x1 = 50 + 48 * Math.cos(2 * Math.PI * start - Math.PI/2);
-    const y1 = 50 + 48 * Math.sin(2 * Math.PI * start - Math.PI/2);
-    const x2 = 50 + 48 * Math.cos(2 * Math.PI * end - Math.PI/2);
-    const y2 = 50 + 48 * Math.sin(2 * Math.PI * end - Math.PI/2);
-    const large = end - start > 0.5 ? 1 : 0;
-    const path = `M50,50 L${x1},${y1} A48,48 0 ${large} 1 ${x2},${y2} Z`;
+// Inline RadarChart: Minimal visual, themed (pure SVG)
+function RadarChart({ axes = [], data = [] }) {
+  // axes: [string]; data: [number] from 0-100, one for each axis.
+  const N = axes.length;
+  if (N === 0 || data.length !== N) return null;
+  const angleStep = (2 * Math.PI) / N;
+  const radius = 80, center = 90, min = 12;
+  // Helper for polar coords
+  const polar = (i, val) => {
+    const a = i * angleStep - Math.PI / 2;
+    const r = min + (radius - min) * (val / 100);
+    return [center + r * Math.cos(a), center + r * Math.sin(a)];
+  };
+
+  // Chart polygon
+  const points = data.map((v, i) => polar(i, v).join(",")).join(" ");
+  // Axes lines & axis labels
+  const axisEls = axes.map((ax, i) => {
+    const [x, y] = polar(i, 100);
+    const [lx, ly] = polar(i, 110);
     return (
-      <path key={i} d={path} fill={colors[d.level] || "#eee"}>
-        <title>{d.level}: {d.value}</title>
-      </path>
+      <g key={ax}>
+        <line x1={center} y1={center} x2={x} y2={y} stroke="var(--border-color)" strokeWidth={1.7} />
+        <text x={lx} y={ly} fontSize={12.5} textAnchor="middle" fill="var(--text-secondary)" alignmentBaseline="middle" style={{ fontWeight: 600 }}>
+          {ax}
+        </text>
+      </g>
     );
   });
+
   return (
-    <svg width="100" height="100" style={{marginRight:12}}>
-      <circle cx={50} cy={50} r={48} fill="#d6daf0" />
-      {arcs}
-      <circle cx={50} cy={50} r={30} fill="#fff" />
-      <text x={50} y={56} textAnchor="middle" fontWeight="bold" fill="#4A90E2" fontSize={18}>
-        {total}
-      </text>
+    <svg width={180} height={180} style={{ background: "none" }}>
+      {/* Axes */}
+      {axisEls}
+      {/* Outer rings (for scale) */}
+      {[0.33, 0.66, 1].map((f, idx) => (
+        <circle
+          key={f}
+          cx={center}
+          cy={center}
+          r={min + (radius - min) * f}
+          fill="none"
+          stroke="var(--border-color)"
+          strokeDasharray="3 3"
+          strokeWidth={f === 1 ? 2.2 : 0.9}
+        />
+      ))}
+      {/* Main data polygon */}
+      <polygon
+        points={points}
+        fill="rgba(74,144,226,0.30)"
+        stroke="var(--primary)"
+        strokeWidth={2.5}
+        style={{ filter: "drop-shadow(0 1px 4px #50e3c230)" }}
+      />
+      {/* Dots */}
+      {data.map((v, i) => {
+        const [x, y] = polar(i, v);
+        return (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={4.1}
+            fill="var(--accent)"
+            stroke="var(--primary)"
+            strokeWidth={1.4}
+          />
+        );
+      })}
     </svg>
+  );
+}
+
+// Threat Heatmap: Clause matrix with color cues
+function ClauseHeatmap({ clauses = [] }) {
+  // clauses: [{clause, severity (0-2), riskLabel}]
+  if (!clauses.length) return null;
+  const colors = ["#bdecb6", "#fff174", "#e87a41"];
+  const textColors = ["#225d24", "#222", "#fff"];
+  return (
+    <div style={{
+      display: "flex", gap: 8, marginTop: 7, flexWrap: "wrap"
+    }}>
+      {clauses.map(({ clause, severity = 0, riskLabel }) => (
+        <div key={clause} style={{
+          minWidth: 88, padding: "10px 13px", borderRadius: 12,
+          background: colors[severity], color: textColors[severity],
+          fontWeight: 600, fontSize: 14, marginBottom: 2,
+          boxShadow: severity === 2 ? "0 0 7px #e87a41" : undefined,
+          border: severity === 1 ? "1.5px dotted #adab2c" : "none",
+        }}>
+          <span>{clause}</span>
+          <span style={{
+            marginLeft: 6, fontWeight: 700, background: "#2222", borderRadius: 7, padding: "2px 7px", fontSize: 13, color: "#888"
+          }}>{riskLabel}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Tabbed Panel: Modern, animated
+function TabbedPanels({ tabs = [] }) {
+  const [curIdx, setCurIdx] = useState(0);
+  return (
+    <div style={{
+      border: "1.3px solid var(--border-color)",
+      borderRadius: 16,
+      background: "var(--base-dark, #191c32)",
+      margin: "22px 0 20px 0",
+      padding: 0,
+      boxShadow: "0 2px 10px #4a90e212"
+    }}>
+      <div style={{
+        display: "flex", borderBottom: "1.3px solid var(--border-color)", background: "rgba(255,255,255,0.02)", borderRadius: "16px 16px 0 0"
+      }}>
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.title}
+            className="btn"
+            style={{
+              borderRadius: "16px 16px 0 0",
+              background: i === curIdx ? "var(--primary)" : "transparent",
+              color: i === curIdx ? "#fff" : "var(--text-secondary)",
+              fontWeight: 600, fontSize: 15, marginRight: 6, border: "none", borderBottom: "none"
+            }}
+            onClick={() => setCurIdx(i)}
+          >{tab.title}</button>
+        ))}
+      </div>
+      <div style={{ padding: "22px 16px", fontSize: 15, minHeight: 66 }}>
+        {tabs[curIdx]?.content}
+      </div>
+    </div>
+  );
+}
+
+function PriorityBadge({ label }) {
+  const color = label === "Urgent" ? "#e34d4f" : label === "Recommended" ? "#F5A623" : "#7ae451";
+  return (
+    <span style={{
+      background: color, color: "#111", borderRadius: 8, fontWeight: 700, fontSize: 11,
+      marginLeft: 7, padding: "2px 9px 2px 8px", letterSpacing: 0.3
+    }}>{label}</span>
   );
 }
 
 // PUBLIC_INTERFACE
 function Dashboard({
-  scores = { legal: 0, cyber: 0 },
-  userName = "",
-  analysisSummary = "",
-  riskStats = [],
+  // If real props supplied, use them -- else show mock/simulated data
+  scores = { cyber: 41, legal: 77, safety: 56 },
+  userName = "Alex",
+  radar = [66, 72, 39, 80, 47, 61],
+  radarLabels = ["Email", "Cloud", "Contracts", "Devices", "Social", "Passwords"],
+  clauseHeat = [
+    { clause: "Termination", severity: 2, riskLabel: "High" },
+    { clause: "Data Privacy", severity: 1, riskLabel: "Med." },
+    { clause: "Liability", severity: 1, riskLabel: "Med." },
+    { clause: "Auto-Renewal", severity: 0, riskLabel: "Low" },
+    { clause: "Jurisdiction", severity: 0, riskLabel: "Low" },
+  ],
+  summary = "This contract exposes moderate legal risks, particularly regarding termination conditions and data privacy inadequacy.",
+  questionAnswers = [
+    { q: "Is there a clear definition of confidential information?", a: "Yes" },
+    { q: "Does the contract specify notice periods?", a: "30 days" },
+    { q: "Are payment terms fair?", a: "60 days, but no late penalty clause." }
+  ],
+  redFlags = [
+    "Termination is too broadly defined.",
+    "No clear dispute resolution.",
+    "Liability cap is vague.",
+    "Data privacy handling ambiguous."
+  ],
+  negotiation = [
+    "Can termination conditions be narrowed?",
+    "Clarify data retention obligations.",
+    "Specify governing law for disputes."
+  ],
+  actionPlan = [
+    "Request clarification on early termination notice.",
+    "Negotiate explicit liability caps.",
+    "Demand data privacy clause revision."
+  ],
+  checklist = [
+    { item: "Enable Two-Factor Authentication", priority: "Urgent" },
+    { item: "Avoid public Wi-Fi for negotiation", priority: "Recommended" },
+    { item: "Review legal counsel's comments", priority: "Optional" }
+  ],
+  suggestionCards = [
+    { title: "Enable 2FA", tip: "Protect all key accounts with two-factor authentication." },
+    { title: "Review Third-party Apps", tip: "Audit 3rd-party access to cloud files." },
+    { title: "Phishing Caution", tip: "Hover before clicking suspicious links." }
+  ],
+  hygieneTips = [
+    "Create unique passwords for work, legal, and cloud accounts.",
+    "Update software before sending or receiving contracts.",
+    "Store legal files in a secure, private folder (cloud or offline)."
+  ],
+  phishingAlert = "🚨 Simulated phishing email detected: 'Your invoice is overdue' - Do not click links, check sender identity.",
+  // For "Download as PDF" -- real implementation uses ReportExport for download
   children
 }) {
-  // Mock risk distribution for pie chart
-  const riskDist = riskStats && riskStats.length
-    ? ["high", "medium", "low"].map(level => ({
-        level,
-        value: riskStats.filter(r => r.level === level).length
-      }))
-    : [
-        { level: "high", value: 2 },
-        { level: "medium", value: 1 },
-        { level: "low", value: 1 }
-      ];
+  // Score Card colors
+  const cardColors = [
+    "linear-gradient(92deg, #4A90E2 60%, #50E3C2 120%)",
+    "linear-gradient(96deg, #F5A623 70%, #ffd170 120%)",
+    "linear-gradient(95deg, #1bc186 60%, #37e4be 120%)"
+  ];
+  const cardVals = [
+    { label: "Cyber Hygiene Score", v: scores.cyber, color: cardColors[0] },
+    { label: "Contract Risk Score", v: scores.legal, color: cardColors[1] },
+    { label: "Overall Safety Index", v: scores.safety, color: cardColors[2] }
+  ];
 
-  // Mocked chart for scores: simple horizontal bar
-  function ScoreBar({ label, value, color }) {
-    return (
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{label}</div>
-        <div style={{
-          background: "#f4f4f8",
-          borderRadius: 12,
-          height: 18,
-          position: "relative",
-          overflow: "hidden"
-        }}>
-          <div style={{
-            width: `${Math.max(Math.min(value,100),0)}%`,
-            background: color,
-            height: "100%",
-            borderRadius: 12,
-            transition: "width 0.6s"
-          }} />
-          <span style={{
-            position: "absolute",
-            right: 8, top: 2, fontSize: 13, fontWeight: 600, color: "#222"
-          }}>{value}</span>
-        </div>
-      </div>
-    );
-  }
+  // Progress bar for report completion (mock: 92%)
+  const progressPct = 92;
 
+  // Modern modular layout
   return (
-    <section>
-      <h2>Analysis Dashboard</h2>
-      <div style={{ marginBottom: 16, color: "var(--text-secondary)" }}>
-        {userName ? <>Welcome <b>{userName}</b>. </> : null}
-        Here are your contract/legal and cyber safety stats:
-      </div>
-      <div style={{
-        display: "flex",
-        gap: 34,
-        alignItems: "center",
-        marginBottom: 20,
-        flexWrap: "wrap"
+    <div className="cli-dashboard-main" style={{
+      margin: "0 auto", maxWidth: 980, padding: "26px 0 54px 0",
+      minHeight: 640, width: "100%", boxSizing: "border-box"
+    }}>
+      <ProgressBar currentStep={4} totalSteps={6} labels={[
+        "Start", "Upload", "Adapt", "Analyze", "Dashboard", "Export"
+      ]} />
+      <h2 style={{
+        fontWeight: 800, fontSize: 2.2 + "rem", margin: "10px 0 9px 0",
+        color: "var(--primary)"
       }}>
-        <div>
-          <ScoreBar
-            label="Legal Risk Score"
-            value={scores.legal}
-            color="var(--accent)"
-          />
-          <ScoreBar
-            label="Cyber Safety Score"
-            value={scores.cyber}
-            color="var(--primary)"
-          />
-        </div>
-        <div style={{display:"flex",alignItems:"center"}}>
-          <RiskPieChart data={riskDist} />
-          <div>
-            {riskDist.map(r =>
-              <div key={r.level} style={{
-                display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 2
-              }}>
-                <span style={{
-                  width: 14, height: 14, borderRadius: "50%", display: "inline-block",
-                  background: r.level === "high" ? "#e87a41" : r.level === "medium" ? "#fff174" : "#bdecb6"
-                }}/>
-                <span style={{
-                  color: "var(--text-secondary)"
-                }}>{r.level.charAt(0).toUpperCase() + r.level.slice(1)} Risk</span> ({r.value})
-              </div>
-            )}
+        Results Dashboard
+      </h2>
+      <div style={{
+        display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center",
+        justifyContent: "space-between", marginBottom: 5
+      }}>
+        {/* Progress Bar horizontal */}
+        <div style={{
+          flex: 1,
+          minWidth: 200,
+          maxWidth: 400,
+          margin: "16px 0 18px 0",
+          paddingRight: 32
+        }}>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Report Completion</div>
+          <div style={{
+            background: "var(--border-color)", height: 12, borderRadius: 17,
+            width: "100%", overflow: "hidden", marginTop: 5, position: "relative"
+          }}>
+            <div style={{
+              height: 12,
+              borderRadius: 17,
+              background: "linear-gradient(90deg, var(--primary), #50e3c2 90%)",
+              width: `${progressPct}%`,
+              boxShadow: "0 0 10px #50E3C280",
+              transition: "width 0.8s"
+            }}></div>
+            <span style={{
+              position: "absolute", right: 9, top: 0, color: "#222", fontWeight: 700, fontSize: 13
+            }}>{progressPct}%</span>
           </div>
         </div>
+        {/* Score Cards */}
+        <div style={{
+          display: "flex", gap: 18, minWidth: 312, flex: 2, justifyContent: "flex-end"
+        }}>
+          {cardVals.map(card => (
+            <div key={card.label} style={{
+              minWidth: 109, minHeight: 54, borderRadius: 15,
+              background: card.color, color: "#fff", fontWeight: 800,
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", boxShadow: "0 1.5px 12px #4a90e222",
+              letterSpacing: 1.6, fontSize: 15, position: "relative"
+            }}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>{card.label}</span>
+              <span style={{
+                fontSize: 28, fontWeight: 900, letterSpacing: 0.5,
+                lineHeight: "35px", marginTop: 2, textShadow: "0 2px 10px #0005"
+              }}>{card.v}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div style={{ marginBottom: 18, color: "#212", fontSize: 15, background: "#f5fafd14", borderRadius: 7, padding: 12 }}>
-        <b>AI Summary:</b> {analysisSummary
-          || "This contract features moderate risk, with key issues in Data Privacy and high-risk in Termination clauses. Cyber safety is also below average."}
-      </div>
-      {children ? <div>{children}</div> : null}
-      {/* Export/Download Section */}
+      {/* Radar and Heatmap block */}
       <div style={{
-        marginTop: 18,
-        padding: 10,
-        background: "#f3f5f350",
-        borderRadius: 8,
-        textAlign: "right"
+        display: "flex", gap: 26, flexWrap: "wrap", alignItems: "center", marginTop: 12
       }}>
+        <div style={{
+          flex: 1, minWidth: 210, display: "flex", flexDirection: "column",
+          alignItems: "center", background: "rgba(255,255,255,0.015)", borderRadius: 12, padding: "18px 10px"
+        }}>
+          <div style={{
+            fontWeight: 700, color: "var(--secondary)", fontSize: 16, marginBottom: 7
+          }}>Behavioral Risk Radar</div>
+          <RadarChart axes={radarLabels} data={radar} />
+        </div>
+        <div style={{
+          flex: 1, minWidth: 230, maxWidth: 390, background: "rgba(255,255,255,0.012)",
+          borderRadius: 12, padding: "18px 12px"
+        }}>
+          <div style={{
+            fontWeight: 700, color: "var(--accent)", fontSize: 16, marginBottom: 8
+          }}>Clause Threat Heatmap</div>
+          <ClauseHeatmap clauses={clauseHeat} />
+        </div>
+      </div>
+      {/* Tabbed Panels: Hygiene Tips, Phishing Alert, Suggestions */}
+      <TabbedPanels tabs={[
+        {
+          title: "Cyber Hygiene Tips",
+          content: (
+            <ul style={{
+              paddingLeft: 22, margin: 0, color: "var(--text-color)", fontSize: 15.2
+            }}>
+              {hygieneTips.map(tip => <li key={tip}>{tip}</li>)}
+            </ul>
+          )
+        },
+        {
+          title: "Phishing Alert",
+          content: (
+            <div style={{
+              background: "linear-gradient(98deg, #212a 70%, #e87a410a 120%)",
+              borderLeft: "5px solid var(--accent)",
+              borderRadius: "9px", color: "var(--text-color)",
+              boxShadow: "0 1.5px 9px #e87a4112", padding: "13px 18px",
+              fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 9
+            }}>
+              <span style={{ fontSize: 23, filter: "drop-shadow(0 0 3px #F5A62344)" }}>{phishingAlert[0]}</span>
+              {phishingAlert.slice(2)}
+            </div>
+          )
+        },
+        {
+          title: "Suggestion Cards",
+          content: (
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+              {suggestionCards.map(sug => (
+                <div key={sug.title} style={{
+                  minWidth: 148, maxWidth: 208, background: "rgba(80,227,194,0.12)",
+                  border: "1.2px dashed var(--secondary)", borderRadius: 13,
+                  padding: "13px 16px", marginBottom: 5,
+                }}>
+                  <div style={{
+                    color: "var(--primary)", fontWeight: 700, fontSize: 15, marginBottom: 6
+                  }}>{sug.title}</div>
+                  <div style={{
+                    color: "var(--text-secondary)", fontSize: 13.5
+                  }}>{sug.tip}</div>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      ]} />
+      {/* Contract Summary */}
+      <div style={{ margin: "30px 0 0 0", padding: 0 }}>
+        <div style={{
+          fontWeight: 700, fontSize: 17, color: "var(--primary)", marginBottom: 6,
+        }}>Contract Summary</div>
+        <div style={{
+          background: "rgba(255,255,255,0.10)", borderRadius: 9,
+          padding: "12px 15px", color: "var(--text-color)", fontSize: 15.5, marginBottom: 19
+        }}>{summary}</div>
+        {/* Simplified Q&A */}
+        <div style={{
+          marginBottom: 13, border: "1.2px solid var(--border-color)",
+          borderRadius: 8, padding: 11, background: "rgba(255,255,255,0.025)"
+        }}>
+          <div style={{
+            fontWeight: 600, fontSize: 15, color: "var(--accent)", marginBottom: 5
+          }}>Q&A Breakdown</div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
+            {questionAnswers.map(qa => (
+              <li key={qa.q} style={{ marginBottom: 6 }}>
+                <span style={{ color: "var(--secondary)", fontWeight: 500 }}>{qa.q}</span>
+                <br />
+                <span style={{ color: "var(--text-color)" }}>{qa.a}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {/* Red Flags Section */}
+        <div style={{
+          marginBottom: 13, border: "1.2px solid #e87a41", borderRadius: 8, padding: 11,
+          background: "rgba(232,122,65,0.035)"
+        }}>
+          <div style={{
+            fontWeight: 600, fontSize: 15, color: "#e87a41", marginBottom: 5
+          }}>Red Flags</div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
+            {redFlags.map(flag =>
+              <li key={flag} style={{
+                color: "#e87a41", fontWeight: 500, marginBottom: 5
+              }}>⚠️ {flag}</li>
+            )}
+          </ul>
+        </div>
+        {/* Negotiation Questions */}
+        <div style={{
+          marginBottom: 15, background: "rgba(80,227,194,0.025)",
+          border: "1.1px solid var(--secondary)", borderRadius: 8, padding: 10
+        }}>
+          <div style={{
+            fontWeight: 600, fontSize: 15, color: "var(--secondary)", marginBottom: 5
+          }}>Negotiation Questions</div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.2 }}>
+            {negotiation.map(q =>
+              <li key={q} style={{
+                color: "var(--secondary)", fontWeight: 500, marginBottom: 6
+              }}>🤝 {q}</li>
+            )}
+          </ul>
+        </div>
+        {/* Action Plan */}
+        <div style={{
+          marginBottom: 15, background: "rgba(245,166,35,0.035)",
+          border: "1.1px solid var(--accent)", borderRadius: 8, padding: 10
+        }}>
+          <div style={{
+            fontWeight: 600, fontSize: 15, color: "var(--accent)", marginBottom: 5
+          }}>Action Plan</div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.2 }}>
+            {actionPlan.map(a =>
+              <li key={a} style={{
+                color: "var(--accent)", fontWeight: 500, marginBottom: 6
+              }}>⭐ {a}</li>
+            )}
+          </ul>
+        </div>
+        {/* Checklist with Priorities */}
+        <div style={{
+          padding: 0,
+          border: "none"
+        }}>
+          <div style={{
+            fontWeight: 600, fontSize: 15, color: "var(--primary)", marginBottom: 6
+          }}>Checklist</div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
+            {checklist.map(ch =>
+              <li key={ch.item} style={{ marginBottom: 6, color: "var(--text-color)", fontWeight: 500 }}>
+                {ch.item}
+                <PriorityBadge label={ch.priority} />
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+      {/* Download/Export Section */}
+      <div style={{ marginTop: 24, paddingTop: 18, textAlign: "right" }}>
         <ReportExport
           scores={scores}
-          riskStats={riskStats}
-          analysisSummary={analysisSummary}
+          riskStats={clauseHeat.map(c => ({
+            label: c.clause, score: c.severity === 2 ? 90 : c.severity === 1 ? 60 : 24,
+            level: c.riskLabel
+          }))}
+          analysisSummary={summary}
           userName={userName}
         />
       </div>
-    </section>
+      {children}
+    </div>
   );
 }
 
