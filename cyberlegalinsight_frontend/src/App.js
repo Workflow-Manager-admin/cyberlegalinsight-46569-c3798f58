@@ -400,15 +400,16 @@ function AppInner() {
           padding: 12,
           display: 'flex',
           flexDirection: 'column',
+          minHeight: 0,
+          boxSizing: 'border-box'
         }}>
-          <div style={{
-            fontWeight: 600, color: 'var(--base-light)', marginBottom: 12
-          }}>
-            News & Phishing Alerts
-          </div>
-          <div style={{ flex: 1, color: 'var(--text-secondary)', fontSize: 13 }}>
-            [Placeholder: Cybersecurity news and phishing simulation feed]
-          </div>
+          {/* NewsFeed sidebar: cyber news + phishing alert updates */}
+          {/*
+            Animated, themed, real-time mock data comes from NewsFeed.
+          */}
+          {require('./components/NewsFeed').default
+            ? React.createElement(require('./components/NewsFeed').default)
+            : null}
         </aside>
 
         {/* MAIN CONTENT WITH ANIMATED STEP TRANSITIONS */}
