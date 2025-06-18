@@ -6,6 +6,7 @@ import QuestionFlow from "./components/QuestionFlow";
 import LexiLockLogo from "./components/LexiLockLogo";
 
 import AnalysisStep from "./components/AnalysisStep";
+import Dashboard from "./components/Dashboard";
 
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
@@ -265,7 +266,8 @@ function AppInner() {
     4: (
       <section key={4}>
         <h2>Step 4: Results Dashboard</h2>
-        <div className="description">[Placeholder: Charts, scores, detailed analysis, download/email options]</div>
+        {/* Replace placeholder with the actual Dashboard component */}
+        <Dashboard />
         <button className="btn" onClick={goBack}>Back</button>
         <button className="btn btn-large" onClick={goNext}>Finish</button>
       </section>
