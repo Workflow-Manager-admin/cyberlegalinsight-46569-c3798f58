@@ -7,7 +7,7 @@ import LexiLockLogo from "./components/LexiLockLogo";
 
 import AnalysisStep from "./components/AnalysisStep";
 import Dashboard from "./components/Dashboard";
-
+import ThankYouConfetti from "./components/ThankYouConfetti";
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
   'Intro',
@@ -274,10 +274,19 @@ function AppInner() {
     ),
     5: (
       <section key={5}>
-        <h2>Export & Save Reports</h2>
-        <div className="description">[Placeholder: Download, email, user history/profile/badges]</div>
-        <button className="btn" onClick={goBack}>Back</button>
-        <button className="btn btn-large" onClick={() => setCurrentStep(0)}>Restart</button>
+        {/* Thank You Confetti celebration page */}
+        <ThankYouConfetti
+          onRetake={() => {
+            setPrevStep(currentStep);
+            setCurrentStep(0);
+          }}
+          onSubscribe={() => {
+            window.open(
+              "mailto:subscribe@lexilock.com?subject=Subscribe%20Me%20for%20Cyber%20Safety%20Tips",
+              "_blank"
+            );
+          }}
+        />
       </section>
     ),
   };
