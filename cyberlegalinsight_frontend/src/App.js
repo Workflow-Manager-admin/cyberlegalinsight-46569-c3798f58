@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import './App.css';
 import { ThemeProvider, useTheme } from './ThemeContext';
 import FileUpload from "./components/FileUpload";
+import QuestionFlow from "./components/QuestionFlow";
 
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
@@ -85,6 +86,10 @@ function AppInner() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
+  // Adaptive Answers State
+  // eslint-disable-next-line
+  const [adaptiveAnswers, setAdaptiveAnswers] = useState({});
+
   // For modal/dialog showcase (e.g., for Export/email, badges overlay - demo only)
   const [modal, setModal] = useState(null); // null or { type, props }
 
@@ -158,9 +163,82 @@ function AppInner() {
     2: (
       <section key={2}>
         <h2>Step 2: Adaptive Questions</h2>
-        <div className="description">[Placeholder: Dynamic question flow based on user answers]</div>
-        <button className="btn" onClick={goBack}>Back</button>
-        <button className="btn btn-large" onClick={goNext}>Continue</button>
+        <QuestionFlow
+          // Example adaptive question set, fully extensible:
+          questions={[
+            {
+              id: "q1",
+              text: "What type of contract did you upload?",
+              type: "single",
+              options: ["Employment", "NDA", "Vendor/Supplier", "Consulting", "Other"],
+              required: true,
+              // Branch: go to NDA questions if NDA, else go to q2
+              next: (val) => val === "NDA" ? "nda1" : "q2"
+            },
+            {
+              id: "q2",
+              text: "Are there clauses about data privacy in your contract?",
+              type: "single",
+              options: ["Yes", "No", "Not sure"],
+              required: true,
+              next: "q3"
+            },
+            {
+              id: "q3",
+              text: "What is your primary goal for this analysis?",
+              type: "single",
+              options: [
+                "Check for legal/financial risk",
+                "Data security review",
+                "Regulatory compliance",
+                "General contract understanding"
+              ],
+              required: true,
+              next: "q4"
+            },
+            {
+              id: "q4",
+              text: "Any specific concerns with this agreement?",
+              type: "text",
+              required: false,
+              next: null // End
+            },
+            // NDA branch example
+            {
+              id: "nda1",
+              text: "Does the NDA specify a term (duration) of confidentiality?",
+              type: "single",
+              options: ["Yes", "No", "Not specified"],
+              next: "nda2"
+            },
+            {
+              id: "nda2",
+              text: "Whose information is covered by this NDA?",
+              type: "single",
+              options: ["Your company", "Other party", "Both", "Not sure"],
+              next: "nda3"
+            },
+            {
+              id: "nda3",
+              text: "Are there exceptions, such as prior knowledge or legal disclosure?",
+              type: "single",
+              options: ["Yes (exceptions listed)", "No exceptions", "Not sure"],
+              next: "nda4"
+            },
+            {
+              id: "nda4",
+              text: "Enter any special clauses, carve-outs, or unique obligations if known:",
+              type: "text",
+              required: false,
+              next: null
+            },
+          ]}
+          onComplete={(answers) => {
+            setAdaptiveAnswers(answers);
+            goNext();
+          }}
+        />
+        <button className="btn" onClick={goBack} style={{ marginTop: 28 }}>Back</button>
       </section>
     ),
     3: (
