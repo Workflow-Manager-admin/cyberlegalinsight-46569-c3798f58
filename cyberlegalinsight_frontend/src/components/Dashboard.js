@@ -1,131 +1,66 @@
 import React, { useState } from "react";
 
-// PUBLIC_INTERFACE
 /**
- * Dashboard – Standalone Review Dashboard with:
- *   - Progress bar, scores, radar (spider) chart, threat heatmap,
- *   - Tabbed content: Hygiene Tips, Phishing Alert, Suggestions,
- *   - Summary, breakdown, red flags, negotiation, action plan, checklist,
- *   - Download Report as PDF button,
- *   - Modular, themed, mock/sample data, previewable as <Dashboard />
- *
- * All logic/UI is self-contained for preview or integration.
+ * PUBLIC_INTERFACE
+ * Standalone Dashboard – visually displays all analysis widgets and output using robust sample/mock data.
+ * Outputs: Progress bar, three score cards, radar/spider chart, heatmap/table, tabs, contract summary, Q&A breakdown,
+ * red flags, negotiation suggestions, action plan/checklist with priorities, and a Download Report button.
+ * All content is always rendered for demo, preview, or integration – no props required.
  */
-function Dashboard({
-  // Optionally override mock data via props.
-  scores,
-  radar,
-  radarLabels,
-  clauseHeat,
-  summary,
-  questionAnswers,
-  redFlags,
-  negotiation,
-  actionPlan,
-  checklist,
-  suggestionCards,
-  hygieneTips,
-  phishingAlert,
-  userName,
-  previewMode,
-}) {
-  // --- Mock/sample data for preview/integration demo ---
-  scores = scores || { cyber: 41, legal: 77, safety: 56 };
-  userName = userName || "Alex";
-  radarLabels =
-    radarLabels ||
-    ["Email", "Cloud", "Contracts", "Devices", "Social", "Passwords"];
-  radar = radar || [66, 72, 39, 80, 47, 61];
-  clauseHeat =
-    clauseHeat ||
-    [
-      { clause: "Termination", severity: 2, riskLabel: "High" },
-      { clause: "Data Privacy", severity: 1, riskLabel: "Medium" },
-      { clause: "Liability", severity: 1, riskLabel: "Medium" },
-      { clause: "Auto-Renewal", severity: 0, riskLabel: "Low" },
-      { clause: "Jurisdiction", severity: 0, riskLabel: "Low" }
-    ];
-  summary =
-    summary ||
+function Dashboard() {
+  // Robust, always-present sample/mock data
+  const sampleScores = { cyber: 41, legal: 77, safety: 56 };
+  const sampleRadarLabels = ["Email", "Cloud", "Contracts", "Devices", "Social", "Passwords"];
+  const sampleRadar = [66, 72, 39, 80, 47, 61];
+  const sampleClauseHeat = [
+    { clause: "Termination", severity: 2, riskLabel: "High" },
+    { clause: "Data Privacy", severity: 1, riskLabel: "Medium" },
+    { clause: "Liability", severity: 1, riskLabel: "Medium" },
+    { clause: "Auto-Renewal", severity: 0, riskLabel: "Low" },
+    { clause: "Jurisdiction", severity: 0, riskLabel: "Low" }
+  ];
+  const sampleSummary =
     "This contract exposes moderate legal risks, particularly regarding termination conditions and data privacy inadequacy.";
-  questionAnswers =
-    questionAnswers ||
-    [
-      { q: "Is there a clear definition of confidential information?", a: "Yes" },
-      { q: "Does the contract specify notice periods?", a: "30 days" },
-      { q: "Are payment terms fair?", a: "60 days, but no late penalty clause." }
-    ];
-  redFlags =
-    redFlags ||
-    [
-      "Termination is too broadly defined.",
-      "No clear dispute resolution.",
-      "Liability cap is vague.",
-      "Data privacy handling ambiguous."
-    ];
-  negotiation =
-    negotiation ||
-    [
-      "Can termination conditions be narrowed?",
-      "Clarify data retention obligations.",
-      "Specify governing law for disputes."
-    ];
-  actionPlan =
-    actionPlan ||
-    [
-      "Request clarification on early termination notice.",
-      "Negotiate explicit liability caps.",
-      "Demand data privacy clause revision."
-    ];
-  checklist =
-    checklist ||
-    [
-      { item: "Enable Two-Factor Authentication", priority: "Urgent" },
-      { item: "Avoid public Wi-Fi for negotiation", priority: "Recommended" },
-      { item: "Review legal counsel's comments", priority: "Optional" }
-    ];
-  suggestionCards =
-    suggestionCards ||
-    [
-      { title: "Enable 2FA", tip: "Protect all key accounts with two-factor authentication." },
-      { title: "Review Third-party Apps", tip: "Audit 3rd-party access to cloud files." },
-      { title: "Phishing Caution", tip: "Hover before clicking suspicious links." }
-    ];
-  hygieneTips =
-    hygieneTips ||
-    [
-      "Create unique passwords for work, legal, and cloud accounts.",
-      "Update software before sending or receiving contracts.",
-      "Store legal files in a secure, private folder (cloud or offline)."
-    ];
-  phishingAlert =
-    phishingAlert ||
-    "🚨 Simulated phishing email detected: 'Your invoice is overdue' - Do not click links, check sender identity.";
-
-  // --- Dashboard Progress Bar ---
-  const progressPct = 92;
-  const stepLabels = [
-    "Start",
-    "Upload",
-    "Adapt",
-    "Analyze",
-    "Dashboard",
-    "Export"
+  const sampleQA = [
+    { q: "Is there a clear definition of confidential information?", a: "Yes" },
+    { q: "Does the contract specify notice periods?", a: "30 days" },
+    { q: "Are payment terms fair?", a: "60 days; no late penalty clause." }
   ];
-
-  // --- Score Cards ---
-  const cardColors = [
-    "linear-gradient(92deg, #4A90E2 60%, #50E3C2 120%)",
-    "linear-gradient(96deg, #F5A623 70%, #ffd170 120%)",
-    "linear-gradient(95deg, #1bc186 60%, #37e4be 120%)"
+  const sampleRedFlags = [
+    "Termination is too broadly defined.",
+    "No clear dispute resolution.",
+    "Liability cap is vague.",
+    "Data privacy handling ambiguous."
   ];
-  const cardVals = [
-    { label: "Cyber Hygiene Score", v: scores.cyber, color: cardColors[0] },
-    { label: "Contract Risk Score", v: scores.legal, color: cardColors[1] },
-    { label: "Overall Safety Index", v: scores.safety, color: cardColors[2] }
+  const sampleNegotiation = [
+    "Can termination conditions be narrowed?",
+    "Clarify data retention obligations.",
+    "Specify governing law for disputes."
   ];
+  const sampleActionPlan = [
+    "Request clarification on early termination notice.",
+    "Negotiate explicit liability caps.",
+    "Demand data privacy clause revision."
+  ];
+  const sampleChecklist = [
+    { item: "Enable Two-Factor Authentication", priority: "Urgent" },
+    { item: "Avoid public Wi-Fi for negotiation", priority: "Recommended" },
+    { item: "Review legal counsel's comments", priority: "Optional" }
+  ];
+  const sampleSuggestionCards = [
+    { title: "Enable 2FA", tip: "Protect all key accounts with two-factor authentication." },
+    { title: "Review Third-party Apps", tip: "Audit 3rd-party access to cloud files." },
+    { title: "Phishing Caution", tip: "Hover before clicking suspicious links." }
+  ];
+  const sampleHygieneTips = [
+    "Create unique passwords for work, legal, and cloud accounts.",
+    "Update software before sending or receiving contracts.",
+    "Store legal files in a secure, private folder (cloud or offline)."
+  ];
+  const phishingAlertSample = "🚨 Simulated phishing email detected: 'Your invoice is overdue' - Do not click links, check sender identity.";
+  const sampleUserName = "Alex";
 
-  // --- Tabs States ---
+  // Tabs state
   const tabList = [
     {
       title: "Cyber Hygiene Tips",
@@ -133,7 +68,7 @@ function Dashboard({
         <ul style={{
           paddingLeft: 22, margin: 0, color: "var(--text-color)", fontSize: 15.2
         }}>
-          {hygieneTips.map(tip => <li key={tip}>{tip}</li>)}
+          {sampleHygieneTips.map(tip => <li key={tip}>{tip}</li>)}
         </ul>
       )
     },
@@ -147,8 +82,8 @@ function Dashboard({
           boxShadow: "0 1.5px 9px #e87a4112", padding: "13px 18px",
           fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 9
         }}>
-          <span style={{ fontSize: 23, filter: "drop-shadow(0 0 3px #F5A62344)" }}>{phishingAlert[0]}</span>
-          {phishingAlert.slice(2)}
+          <span style={{ fontSize: 23, filter: "drop-shadow(0 0 3px #F5A62344)" }}>{phishingAlertSample[0]}</span>
+          {phishingAlertSample.slice(2)}
         </div>
       )
     },
@@ -156,7 +91,7 @@ function Dashboard({
       title: "Suggestion Cards",
       content: (
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
-          {suggestionCards.map(sug => (
+          {sampleSuggestionCards.map(sug => (
             <div key={sug.title} style={{
               minWidth: 148, maxWidth: 208, background: "rgba(80,227,194,0.12)",
               border: "1.2px dashed var(--secondary)", borderRadius: 13,
@@ -176,9 +111,25 @@ function Dashboard({
   ];
   const [tabIdx, setTabIdx] = useState(0);
 
-  // === Modular Components Inside Dashboard ===
+  // === Widget components ===
 
-  // Radar/Spider Chart
+  // Progress Steps Indicator
+  const stepLabels = ["Start", "Upload", "Adapt", "Analyze", "Dashboard", "Export"];
+  const progressPct = 92;
+
+  // Score Cards
+  const cardColors = [
+    "linear-gradient(92deg, #4A90E2 60%, #50E3C2 120%)",
+    "linear-gradient(96deg, #F5A623 70%, #ffd170 120%)",
+    "linear-gradient(95deg, #1bc186 60%, #37e4be 120%)"
+  ];
+  const cardVals = [
+    { label: "Cyber Hygiene Score", v: sampleScores.cyber, color: cardColors[0] },
+    { label: "Contract Risk Score", v: sampleScores.legal, color: cardColors[1] },
+    { label: "Overall Safety Index", v: sampleScores.safety, color: cardColors[2] }
+  ];
+
+  // Spider/Radar chart
   function RadarChart({ axes = [], data = [] }) {
     const N = axes.length;
     if (N === 0 || data.length !== N) return null;
@@ -206,7 +157,6 @@ function Dashboard({
     return (
       <svg width={180} height={180} style={{ background: "none" }}>
         {axisEls}
-        {/* Scale rings */}
         {[0.33, 0.66, 1].map(f => (
           <circle
             key={f}
@@ -219,7 +169,6 @@ function Dashboard({
             strokeWidth={f === 1 ? 2.2 : 0.9}
           />
         ))}
-        {/* Data polygon */}
         <polygon
           points={points}
           fill="rgba(74,144,226,0.30)"
@@ -260,7 +209,7 @@ function Dashboard({
     );
   }
 
-  // Priority badge for checklist priorities
+  // Priority badge for checklist
   function PriorityBadge({ label }) {
     const color =
       label === "Urgent"
@@ -286,7 +235,7 @@ function Dashboard({
   function TabbedPanels({ tabs, curIdx, setCurIdx }) {
     return (
       <div style={{
-        border: "1.3px solid var(--border-color)",
+        border: "1.2px solid var(--border-color)",
         borderRadius: 16,
         background: "var(--base-dark, #191c32)",
         margin: "22px 0 20px 0",
@@ -294,7 +243,7 @@ function Dashboard({
         boxShadow: "0 2px 10px #4a90e212"
       }}>
         <div style={{
-          display: "flex", borderBottom: "1.3px solid var(--border-color)", background: "rgba(255,255,255,0.02)", borderRadius: "16px 16px 0 0"
+          display: "flex", borderBottom: "1.2px solid var(--border-color)", background: "rgba(255,255,255,0.02)", borderRadius: "16px 16px 0 0"
         }}>
           {tabs.map((tab, i) => (
             <button
@@ -317,9 +266,9 @@ function Dashboard({
     );
   }
 
-  // Download/Export Section: Download as PDF/HTML report
+  // Download Report as PDF
   function handleDownloadPDF() {
-    // Just export an HTML file for mock PDF
+    // Export as HTML for demo/mock "PDF"
     const html = `
       <html>
         <head>
@@ -327,22 +276,22 @@ function Dashboard({
         </head>
         <body style="font-family:Arial,sans-serif;">
           <h2>LexiLock Dashboard Report</h2>
-          <div><b>User:</b> ${userName}</div>
-          <div><b>Scores:</b> Cyber Hygiene: ${scores.cyber} | Legal: ${scores.legal} | Safety Index: ${scores.safety}</div>
-          <div><b>Summary:</b> ${summary}</div>
+          <div><b>User:</b> ${sampleUserName}</div>
+          <div><b>Scores:</b> Cyber Hygiene: ${sampleScores.cyber} | Legal: ${sampleScores.legal} | Safety Index: ${sampleScores.safety}</div>
+          <div><b>Summary:</b> ${sampleSummary}</div>
           <div><b>Contract Q&A:</b>
             <ul>
-            ${questionAnswers.map(qa => `<li><b>${qa.q}</b> <br/>${qa.a}</li>`).join("")}
+            ${sampleQA.map(qa => `<li><b>${qa.q}</b> <br/>${qa.a}</li>`).join("")}
             </ul>
           </div>
           <div><b>Red Flags:</b>
-            <ul>${redFlags.map(f => `<li>${f}</li>`).join("")}</ul>
+            <ul>${sampleRedFlags.map(f => `<li>${f}</li>`).join("")}</ul>
           </div>
           <div><b>Negotiation Suggestions:</b>
-            <ul>${negotiation.map(n => `<li>${n}</li>`).join("")}</ul>
+            <ul>${sampleNegotiation.map(n => `<li>${n}</li>`).join("")}</ul>
           </div>
           <div><b>Checklist:</b>
-            <ul>${checklist.map(c => `<li>${c.item} [${c.priority}]</li>`).join("")}</ul>
+            <ul>${sampleChecklist.map(c => `<li>${c.item} [${c.priority}]</li>`).join("")}</ul>
           </div>
           <div style="color:#999; margin-top:22px;font-size:12px;">(Demo Export powered by LexiLock Dashboard v1.0)</div>
         </body>
@@ -364,8 +313,16 @@ function Dashboard({
   return (
     <div className="cli-dashboard-main" style={{
       margin: "0 auto", maxWidth: 980, padding: "26px 0 54px 0",
-      minHeight: 640, width: "100%", boxSizing: "border-box"
+      minHeight: 640, width: "100%", boxSizing: "border-box",
+      fontFamily: "Inter, Roboto, Arial, sans-serif"
     }}>
+      {/* Inline section CSS for visibility */}
+      <style>{`
+        .cli-dashboard-main ::selection { background: #50e3c280; }
+        @media (max-width: 668px) {
+          .cli-dashboard-main { padding: 10px 2vw 28px 2vw !important; }
+        }
+      `}</style>
       {/* Progress Steps Indicator */}
       <div style={{ margin: '24px 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
         {stepLabels.map((label, i) => (
@@ -466,7 +423,7 @@ function Dashboard({
           <div style={{
             fontWeight: 700, color: "var(--secondary)", fontSize: 16, marginBottom: 7
           }}>Behavioral Risk Radar</div>
-          <RadarChart axes={radarLabels} data={radar} />
+          <RadarChart axes={sampleRadarLabels} data={sampleRadar} />
         </div>
         <div style={{
           flex: 1, minWidth: 230, maxWidth: 390, background: "rgba(255,255,255,0.012)",
@@ -475,7 +432,7 @@ function Dashboard({
           <div style={{
             fontWeight: 700, color: "var(--accent)", fontSize: 16, marginBottom: 8
           }}>Clause Threat Heatmap</div>
-          <ClauseHeatmap clauses={clauseHeat} />
+          <ClauseHeatmap clauses={sampleClauseHeat} />
         </div>
       </div>
 
@@ -490,7 +447,7 @@ function Dashboard({
         <div style={{
           background: "rgba(255,255,255,0.10)", borderRadius: 9,
           padding: "12px 15px", color: "var(--text-color)", fontSize: 15.5, marginBottom: 19
-        }}>{summary}</div>
+        }}>{sampleSummary}</div>
         <div style={{
           marginBottom: 13, border: "1.2px solid var(--border-color)",
           borderRadius: 8, padding: 11, background: "rgba(255,255,255,0.025)"
@@ -499,7 +456,7 @@ function Dashboard({
             fontWeight: 600, fontSize: 15, color: "var(--accent)", marginBottom: 5
           }}>Q&A Breakdown</div>
           <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
-            {questionAnswers.map(qa => (
+            {sampleQA.map(qa => (
               <li key={qa.q} style={{ marginBottom: 6 }}>
                 <span style={{ color: "var(--secondary)", fontWeight: 500 }}>{qa.q}</span>
                 <br />
@@ -517,7 +474,7 @@ function Dashboard({
             fontWeight: 600, fontSize: 15, color: "#e87a41", marginBottom: 5
           }}>Red Flags</div>
           <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
-            {redFlags.map(flag =>
+            {sampleRedFlags.map(flag =>
               <li key={flag} style={{
                 color: "#e87a41", fontWeight: 500, marginBottom: 5
               }}>⚠️ {flag}</li>
@@ -533,7 +490,7 @@ function Dashboard({
             fontWeight: 600, fontSize: 15, color: "var(--secondary)", marginBottom: 5
           }}>Negotiation Suggestions</div>
           <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.2 }}>
-            {negotiation.map(q =>
+            {sampleNegotiation.map(q =>
               <li key={q} style={{
                 color: "var(--secondary)", fontWeight: 500, marginBottom: 6
               }}>🤝 {q}</li>
@@ -549,7 +506,7 @@ function Dashboard({
             fontWeight: 600, fontSize: 15, color: "var(--accent)", marginBottom: 5
           }}>Action Plan</div>
           <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.2 }}>
-            {actionPlan.map(a =>
+            {sampleActionPlan.map(a =>
               <li key={a} style={{
                 color: "var(--accent)", fontWeight: 500, marginBottom: 6
               }}>⭐ {a}</li>
@@ -565,7 +522,7 @@ function Dashboard({
             fontWeight: 600, fontSize: 15, color: "var(--primary)", marginBottom: 6
           }}>Checklist</div>
           <ul style={{ paddingLeft: 22, margin: 0, fontSize: 14.7 }}>
-            {checklist.map(ch =>
+            {sampleChecklist.map(ch =>
               <li key={ch.item} style={{ marginBottom: 6, color: "var(--text-color)", fontWeight: 500 }}>
                 {ch.item}
                 <PriorityBadge label={ch.priority} />
@@ -590,12 +547,10 @@ function Dashboard({
           Download Report as PDF
         </button>
       </div>
-
-      {previewMode && (
-        <div style={{ marginTop: 28, fontSize: 11, color: "#888", textAlign: "center" }}>
-          Preview mode: To integrate, import & use <b>&lt;Dashboard /&gt;</b> in your page.
-        </div>
-      )}
+      {/* Preview Note */}
+      <div style={{ marginTop: 28, fontSize: 11, color: "#888", textAlign: "center" }}>
+        All data is example/mock; this dashboard will always show every section.
+      </div>
     </div>
   );
 }
