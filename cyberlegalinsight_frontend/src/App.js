@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import { ThemeProvider, useTheme } from './ThemeContext';
 
 // Step labels for navigation/progress mockup
 const STEP_LABELS = [
@@ -11,10 +12,12 @@ const STEP_LABELS = [
   'Export',
 ];
 
-// PUBLIC_INTERFACE
-function App() {
+function AppInner() {
   // SPA step/progress state (0: Intro; progresses by user interaction)
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Theme
+  const { theme, toggleTheme } = useTheme();
 
   // Navigation logic: forward/back
   const goNext = () => setCurrentStep((s) => Math.min(s + 1, STEP_LABELS.length - 1));
@@ -126,8 +129,29 @@ function App() {
           <div className="logo">
             <span className="logo-symbol">*</span> CyberLegalInsight
           </div>
-          {/* Placeholder for future theme toggle/user profile */}
-          <button className="btn" style={{ marginLeft: 14 }}>Theme</button>
+          {/* Animated theme toggle */}
+          <button
+            className="btn"
+            style={{
+              marginLeft: 14,
+              background: "var(--secondary)",
+              color: "#111",
+              display: "flex",
+              alignItems: "center",
+              fontWeight: 600,
+              gap: 8,
+              transition: 'background 0.3s'
+            }}
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+            onClick={toggleTheme}
+          >
+            {theme === "light" ? (
+              <span aria-hidden style={{ fontSize: 18, display: "inline-block", transition: "transform 0.3s" }}>🌙</span>
+            ) : (
+              <span aria-hidden style={{ fontSize: 18, display: "inline-block", transition: "transform 0.3s" }}>☀️</span>
+            )}
+            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+          </button>
         </div>
       </nav>
 
@@ -197,6 +221,14 @@ function App() {
         </aside>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppInner />
+    </ThemeProvider>
   );
 }
 
