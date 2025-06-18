@@ -124,11 +124,32 @@ function NewsFeed({ items }) {
           marginBottom: 13,
           opacity: isNew ? 0 : 1,
           animation: isNew
-            ? "cli-newsfadein 0.56s cubic-bezier(.68,-0.6,.32,1.6) forwards"
+            ? "cli-newsfadein 0.63s cubic-bezier(.68,-0.6,.32,1.6) forwards"
             : undefined,
           transition: "box-shadow 0.3s, background 0.35s",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Animated side pulse for alerts */}
+        {item.type === "alert" && (
+          <span
+            style={{
+              position: "absolute",
+              left: -9,
+              top: 18,
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background: "radial-gradient(circle,var(--accent,#F5A623) 60%,#f5828500 100%)",
+              boxShadow: "0 0 9px 2px #f5a62370,0 0 0 #fff0",
+              opacity: 0.8,
+              animation: "pulse-alert 1.35s cubic-bezier(.68,-0.6,.32,1.6) infinite"
+            }}
+            aria-hidden
+          />
+        )}
+
         <div style={{ fontWeight: 600, fontSize: 13.5, color }}>
           {item.title}
         </div>
@@ -159,24 +180,41 @@ function NewsFeed({ items }) {
 
   return (
     <section>
-      {/* Anim fade-in keyframes */}
+      {/* Anim fade-in keyframes and alert pulse */}
       <style>
         {`
-        @keyframes cli-newsfadein {
-          from {
-            opacity: 0;
-            transform: translateY(-7px) scale(.97);
-            filter: blur(2px);
+          @keyframes cli-newsfadein {
+            from {
+              opacity: 0;
+              transform: translateY(-7px) scale(.97);
+              filter: blur(2px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              filter: none;
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: none;
+          @keyframes pulse-alert {
+            0% { opacity: .82; box-shadow: 0 0 9px 2px #f5a62390; }
+            60% { opacity: .64; box-shadow: 0 0 26px 7px #f5a62314; }
+            100% { opacity: .82; box-shadow: 0 0 9px 2px #f5a62390; }
           }
-        }
         `}
       </style>
-      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--base-light)", margin: "0 0 7px 2px" }}>
+      <div
+        style={{
+          fontWeight: 700,
+          fontSize: 15,
+          color: "var(--base-light)",
+          margin: "0 0 7px 2px",
+          letterSpacing: 0.2,
+          display: "flex",
+          alignItems: "center",
+          gap: 7
+        }}
+      >
+        <span role="img" aria-label="Feed">📰</span>
         News & Phishing Alerts
       </div>
       <div>
